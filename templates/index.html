@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: #fff;
+            text-align: center;
+        }
+        header {
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #game-container {
+            margin: 20px auto;
+            max-width: 400px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 32px;
+            color: #333;
+            background-color: #fff;
+            border: 2px solid #0072ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .cell:hover {
+            background-color: #0072ff;
+            color: #fff;
+        }
+        .cell.taken {
+            pointer-events: none;
+            background-color: #ddd;
+        }
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
+        p, button {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #0072ff;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background-color: #005bb5;
+        }
+        #winner {
+            font-weight: bold;
+            font-size: 20px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <header>Tic Tac Toe</header>
+    <div id="game-container">
+        <label for="difficulty">Select Difficulty:</label>
+        <select id="difficulty" onchange="setDifficulty()">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard" selected>Hard</option>
+        </select>
+        <div id="board"></div>
+        <p id="winner"></p>
+        <button onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const winnerText = document.getElementById('winner');
+
+        function createBoard() {
+            board.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => makeMove(i, j));
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function updateBoard(gameState) {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const cell = document.querySelector(`[data-row='${i}'][data-col='${j}']`);
+                    cell.textContent = gameState.board[i][j];
+                    if (gameState.board[i][j]) {
+                        cell.classList.add('taken');
+                    } else {
+                        cell.classList.remove('taken');
+                    }
+                }
+            }
+            if (gameState.winner) {
+                winnerText.textContent = `Winner: ${gameState.winner}`;
+            } else {
+                winnerText.textContent = '';
+            }
+        }
+
+        async function makeMove(row, col) {
+            const response = await fetch('/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ row, col }),
+            });
+            const gameState = await response.json();
+            updateBoard(gameState);
+        }
+
+        async function resetGame() {
+            const response = await fetch('/reset', { method: 'POST' });
+            const gameState = await response.json();
+            updateBoard(gameState);
+        }
+
+        async function setDifficulty() {
+            const difficulty = document.getElementById('difficulty').value;
+            await fetch('/set_difficulty', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ difficulty }),
+            });
+            resetGame(); // Reset the game after setting difficulty
+        }
+
+        createBoard();
+        resetGame();
+    </script>
+</body>
+</html>
