@@ -128,7 +128,11 @@
                 }
             }
             if (gameState.winner) {
-                winnerText.textContent = `Winner: ${gameState.winner}`;
+                if (gameState.winner === "Draw") {
+                    winnerText.textContent = "It's a Draw!";
+                } else {
+                    winnerText.textContent = `Winner: ${gameState.winner}`;
+                }
             } else {
                 winnerText.textContent = '';
             }

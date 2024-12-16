@@ -117,6 +117,10 @@ def move():
         game_state['winner'] = winner
         return jsonify(game_state)
 
+    if not is_moves_left(game_state['board']):
+        game_state['winner'] = "Draw"
+        return jsonify(game_state)
+
     game_state['turn'] = "O"
 
     # Computer move
@@ -133,6 +137,9 @@ def move():
             winner = check_winner(game_state['board'])
             if winner:
                 game_state['winner'] = winner
+
+    if not game_state['winner'] and not is_moves_left(game_state['board']):
+        game_state['winner'] = "Draw"
 
     game_state['turn'] = "X"
 
