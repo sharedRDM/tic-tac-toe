@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, jsonify, request
 import random
 
@@ -9,7 +8,8 @@ game_state = {
     "board": [["" for _ in range(3)] for _ in range(3)],
     "turn": "X",
     "winner": None,
-    "difficulty": "hard"  # Default difficulty
+    "difficulty": "hard",  # Default difficulty
+    "game_mode": "computer"  # Default to playing against the computer
 }
 
 def check_winner(board):
@@ -100,6 +100,13 @@ def set_difficulty():
     game_state['difficulty'] = data.get('difficulty', 'hard')
     return jsonify({"difficulty": game_state['difficulty']})
 
+@app.route('/set_game_mode', methods=['POST'])
+def set_game_mode():
+    global game_state
+    data = request.json
+    game_state['game_mode'] = data.get('game_mode', 'computer')
+    return jsonify({"game_mode": game_state['game_mode']})
+
 @app.route('/move', methods=['POST'])
 def move():
     global game_state
@@ -117,14 +124,11 @@ def move():
         game_state['winner'] = winner
         return jsonify(game_state)
 
-    if not is_moves_left(game_state['board']):
-        game_state['winner'] = "Draw"
-        return jsonify(game_state)
+    # Switch turn
+    game_state['turn'] = "O" if game_state['turn'] == "X" else "X"
 
-    game_state['turn'] = "O"
-
-    # Computer move
-    if not game_state['winner']:
+    # Computer move if in computer mode and it's O's turn
+    if game_state['game_mode'] == "computer" and game_state['turn'] == "O" and not game_state['winner']:
         if game_state['difficulty'] == "easy":
             ai_row, ai_col = random_move(game_state['board'])
         elif game_state['difficulty'] == "medium":
@@ -138,10 +142,7 @@ def move():
             if winner:
                 game_state['winner'] = winner
 
-    if not game_state['winner'] and not is_moves_left(game_state['board']):
-        game_state['winner'] = "Draw"
-
-    game_state['turn'] = "X"
+        game_state['turn'] = "X"
 
     return jsonify(game_state)
 
@@ -152,7 +153,8 @@ def reset():
         "board": [["" for _ in range(3)] for _ in range(3)],
         "turn": "X",
         "winner": None,
-        "difficulty": game_state['difficulty']  # Preserve difficulty
+        "difficulty": game_state['difficulty'],  # Preserve difficulty
+        "game_mode": game_state['game_mode']  # Preserve game mode
     }
     return jsonify(game_state)
 
